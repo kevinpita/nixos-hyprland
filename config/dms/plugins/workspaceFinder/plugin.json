@@ -1,0 +1,16 @@
+{
+  "id": "workspaceFinder",
+  "name": "Open Windows",
+  "description": "Find and focus open windows across Hyprland workspaces",
+  "version": "1.0.0",
+  "author": "Kevin Pita",
+  "type": "launcher",
+  "capabilities": ["launcher", "window-management"],
+  "component": "./WorkspaceFinderLauncher.qml",
+  "icon": "select_window",
+  "trigger": "",
+  "viewMode": "list",
+  "viewModeEnforced": true,
+  "requires_dms": ">=1.5.0",
+  "permissions": []
+}

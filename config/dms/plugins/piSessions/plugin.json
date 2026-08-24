@@ -1,0 +1,14 @@
+{
+  "id": "piSessions",
+  "name": "Pi Sessions",
+  "description": "Shows all active Pi sessions and their lifecycle state in DankBar",
+  "version": "1.0.0",
+  "author": "Kevin Pita",
+  "type": "widget",
+  "capabilities": ["dankbar-widget", "monitoring", "process"],
+  "component": "./PiSessionsWidget.qml",
+  "icon": "smart_toy",
+  "requires_dms": ">=1.5.0",
+  "requires": ["pi-session-status"],
+  "permissions": ["process"]
+}

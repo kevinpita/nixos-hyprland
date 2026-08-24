@@ -1,0 +1,16 @@
+{
+  "aiOverviewControl": {
+    "enabled": true,
+    "providerSelection": "codex,claude,antigravity",
+    "pillMode": "top",
+    "barWindowOverrides": "codex:highest,claude:highest,antigravity:highest",
+    "densityMode": "compact",
+    "pillProviders": "codex"
+  },
+  "piSessions": {
+    "enabled": true
+  },
+  "workspaceFinder": {
+    "enabled": true
+  }
+}

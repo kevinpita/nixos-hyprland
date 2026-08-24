@@ -1,0 +1,145 @@
+--- a/providers/get-provider-usage
++++ b/providers/get-provider-usage
+@@ -823,24 +823,34 @@
+       done
+     fi
+ 
+-    # Desktop keyring (agy CLI) as an extra source, if it carries a fresh session.
++    # The agy CLI stores the same OAuth payload in a private JSON file on
++    # platforms where it does not use Secret Service. Check both sources.
+     # When ANTIGRAVITY_STATE_DB is explicitly set, it pins discovery to that DB
+     # for deterministic tests and targeted debugging, so do not fall through to
+-    # unrelated local keyring credentials.
+-    if [ -z "${ANTIGRAVITY_STATE_DB:-}" ] && command -v secret-tool >/dev/null 2>&1; then
+-      local keyring_payload service
+-      for service in "gemini" "${ANTIGRAVITY_KEYRING_SERVICE:-Antigravity CLI}" "antigravity-cli" "Antigravity"; do
+-        if [ "$service" = "gemini" ]; then
+-          keyring_payload="$(timeout 3 secret-tool lookup service gemini username antigravity 2>/dev/null || true)"
++    # other local credentials.
++    if [ -z "${ANTIGRAVITY_STATE_DB:-}" ]; then
++      local credential_payload credential_source service
++      local token_file="${ANTIGRAVITY_CLI_TOKEN_FILE:-$HOME/.gemini/antigravity-cli/antigravity-oauth-token}"
++      for service in "agy-token-file" "gemini" "${ANTIGRAVITY_KEYRING_SERVICE:-Antigravity CLI}" "antigravity-cli" "Antigravity"; do
++        if [ "$service" = "agy-token-file" ]; then
++          [ -r "$token_file" ] || continue
++          credential_payload="$(<"$token_file")"
++          credential_source="agy CLI"
++        elif ! command -v secret-tool >/dev/null 2>&1; then
++          continue
++        elif [ "$service" = "gemini" ]; then
++          credential_payload="$(timeout 3 secret-tool lookup service gemini username antigravity 2>/dev/null || true)"
++          credential_source="CLI keyring"
+         else
+-          keyring_payload="$(timeout 3 secret-tool lookup service "$service" 2>/dev/null || true)"
++          credential_payload="$(timeout 3 secret-tool lookup service "$service" 2>/dev/null || true)"
++          credential_source="CLI keyring"
+         fi
+-        [ -n "$keyring_payload" ] || continue
+-        rt="$(printf '%s' "$keyring_payload" | extract_antigravity_keyring_refresh)"
++        [ -n "$credential_payload" ] || continue
++        rt="$(printf '%s' "$credential_payload" | extract_antigravity_keyring_refresh)"
+         [ -n "$rt" ] || continue
+         : > "$request_error_file"
+         if ! refreshed="$(antigravity_refresh_access_token "$rt" 2>"$request_error_file")"; then
+-          antigravity_append_account_error "$account_errors_file" "CLI keyring" "Account unavailable" "oauth-refresh" \
++          antigravity_append_account_error "$account_errors_file" "$credential_source" "Account unavailable" "oauth-refresh" \
+             "$(cut -f1 "$request_error_file")" "$(cut -f2- "$request_error_file")"
+           continue
+         fi
+@@ -852,7 +862,7 @@
+         : > "$tmp_body"
+         : > "$request_error_file"
+         if ! quota_body="$(antigravity_quota_request_body "$at" "$endpoint" "$user_agent" "$platform" 2>"$request_error_file")"; then
+-          antigravity_append_account_error "$account_errors_file" "CLI keyring" "$email" "loadCodeAssist" \
++          antigravity_append_account_error "$account_errors_file" "$credential_source" "$email" "loadCodeAssist" \
+             "$(cut -f1 "$request_error_file")" "$(cut -f2- "$request_error_file")"
+           continue
+         fi
+@@ -868,16 +878,16 @@
+             -d "$quota_body" \
+             "$endpoint/$quota_method" 2>/dev/null)" || keyring_curl_status=$?
+         if [ "$keyring_curl_status" -ne 0 ]; then
+-          antigravity_append_account_error "$account_errors_file" "CLI keyring" "$email" "fetchAvailableModels" 1 \
++          antigravity_append_account_error "$account_errors_file" "$credential_source" "$email" "fetchAvailableModels" 1 \
+             "Antigravity fetchAvailableModels request could not reach Google."
+         elif [ "$keyring_http_status" != "200" ]; then
+-          antigravity_append_account_error "$account_errors_file" "CLI keyring" "$email" "fetchAvailableModels" "$keyring_http_status" \
++          antigravity_append_account_error "$account_errors_file" "$credential_source" "$email" "fetchAvailableModels" "$keyring_http_status" \
+             "$(antigravity_http_error_message fetchAvailableModels "$keyring_http_status" "$tmp_body")"
+         elif ! jq -e '(.models | type) == "object"' "$tmp_body" >/dev/null 2>&1; then
+-          antigravity_append_account_error "$account_errors_file" "CLI keyring" "$email" "fetchAvailableModels" 1 \
++          antigravity_append_account_error "$account_errors_file" "$credential_source" "$email" "fetchAvailableModels" 1 \
+             "Antigravity fetchAvailableModels response schema changed: models object is missing."
+         else
+-          antigravity_models_account_json "CLI keyring" "$email" "CLI keyring OAuth (refreshed)" < "$tmp_body" >> "$accounts_file"
++          antigravity_models_account_json "$credential_source" "$email" "$credential_source OAuth (refreshed)" < "$tmp_body" >> "$accounts_file"
+         fi
+         break
+       done
+--- a/tests/test-antigravity-live.sh
++++ b/tests/test-antigravity-live.sh
+@@ -6,9 +6,11 @@
+ trap 'rm -rf "$TMP_ROOT"' EXIT
+ 
+ FAKE_BIN="$TMP_ROOT/bin"
+-CONFIG_HOME="$TMP_ROOT/.config"
++TEST_HOME="$TMP_ROOT/home"
++CONFIG_HOME="$TEST_HOME/.config"
+ DB="$CONFIG_HOME/Antigravity IDE/User/globalStorage/state.vscdb"
+-mkdir -p "$FAKE_BIN" "$(dirname "$DB")"
++CLI_TOKEN="$TEST_HOME/.gemini/antigravity-cli/antigravity-oauth-token"
++mkdir -p "$FAKE_BIN" "$(dirname "$DB")" "$(dirname "$CLI_TOKEN")"
+ : > "$DB"
+ 
+ export FAKE_CURL_LOG="$TMP_ROOT/curl-argv.log"
+@@ -16,6 +18,7 @@
+ export FAKE_FETCH_COUNT_FILE="$TMP_ROOT/fetch-count"
+ export REFRESH_ONE='1//ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef'
+ export REFRESH_TWO='1//zyxwvutsrqponmlkjihgfedcba987654'
++printf '{"token":{"refresh_token":"%s"},"auth_method":"oauth-pkce"}\n' "$REFRESH_TWO" > "$CLI_TOKEN"
+ 
+ cat > "$FAKE_BIN/sqlite3" <<'SH'
+ #!/usr/bin/env bash
+@@ -24,6 +27,7 @@
+ 
+ cat > "$FAKE_BIN/secret-tool" <<'SH'
+ #!/usr/bin/env bash
++[ "${FAKE_SECRET_TOOL_EMPTY:-false}" != "true" ] || exit 1
+ printf '{"refresh_token":"%s"}\n' "$REFRESH_TWO"
+ SH
+ 
+@@ -116,12 +120,32 @@
+ chmod +x "$FAKE_BIN/curl" "$FAKE_BIN/sqlite3" "$FAKE_BIN/secret-tool"
+ 
+ run_adapter() {
+-  PATH="$FAKE_BIN:$PATH" \
+-    XDG_CONFIG_HOME="$CONFIG_HOME" \
++  HOME="$TEST_HOME" \
++    PATH="$FAKE_BIN:$PATH" \
++    XDG_CONFIG_HOME="${TEST_CONFIG_HOME:-$CONFIG_HOME}" \
+     ANTIGRAVITY_API_BASE_URL="https://fake.antigravity.invalid" \
+     "$ROOT/providers/get-provider-usage" antigravity ""
+ }
+ 
++EMPTY_CONFIG="$TMP_ROOT/empty-config"
++mkdir -p "$EMPTY_CONFIG"
++: > "$FAKE_CURL_LOG"
++: > "$FAKE_CURL_STDIN"
++rm -f "$FAKE_FETCH_COUNT_FILE"
++CLI_ONLY="$(TEST_CONFIG_HOME="$EMPTY_CONFIG" FAKE_SECRET_TOOL_EMPTY=true run_adapter)"
++printf '%s' "$CLI_ONLY" | jq -e '
++  .[0].provider == "antigravity"
++  and .[0].error == null
++  and (.[0].accounts | length) == 1
++  and .[0].accounts[0].install == "agy CLI"
++  and .[0].accounts[0].email == "two@example.invalid"
++' >/dev/null
++grep -Fxq "$REFRESH_TWO" "$FAKE_CURL_STDIN"
++if grep -Fq "$REFRESH_TWO" "$FAKE_CURL_LOG"; then
++  echo "agy refresh token leaked into curl argv" >&2
++  exit 1
++fi
++
+ : > "$FAKE_CURL_LOG"
+ : > "$FAKE_CURL_STDIN"
+ rm -f "$FAKE_FETCH_COUNT_FILE"

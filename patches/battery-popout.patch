@@ -1,0 +1,169 @@
+--- a/quickshell/Modules/DankBar/Popouts/BatteryPopout.qml
++++ b/quickshell/Modules/DankBar/Popouts/BatteryPopout.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import Quickshell
++import Quickshell.Io
+ import Quickshell.Services.UPower
+ import qs.Common
+ import qs.Services
+@@ -11,6 +12,20 @@
+     layerNamespace: "dms:battery"
+ 
+     property var triggerScreen: null
++    property var chargeThresholds: ({
++            "available": false,
++            "start": 0,
++            "end": 0,
++            "configuredStart": 0,
++            "configuredEnd": 0
++        })
++    readonly property bool fullChargeActive: chargeThresholds.available && chargeThresholds.end > chargeThresholds.configuredEnd
++
++    function refreshChargeThresholds() {
++        if (!chargeStatusProcess.running) {
++            chargeStatusProcess.running = true;
++        }
++    }
+ 
+     function isActiveProfile(profile) {
+         if (typeof PowerProfiles === "undefined") {
+@@ -37,6 +52,66 @@
+     screen: triggerScreen
+ 
+     onBackgroundClicked: close()
++    onShouldBeVisibleChanged: {
++        if (shouldBeVisible) {
++            refreshChargeThresholds();
++        }
++    }
++
++    Process {
++        id: chargeStatusProcess
++
++        command: ["@batteryChargeStatus@"]
++        running: false
++        stdout: StdioCollector {
++            onStreamFinished: {
++                try {
++                    root.chargeThresholds = JSON.parse(text.trim());
++                } catch (error) {
++                    root.chargeThresholds = {
++                        "available": false,
++                        "start": 0,
++                        "end": 0,
++                        "configuredStart": 0,
++                        "configuredEnd": 0
++                    };
++                }
++            }
++        }
++    }
++
++    Process {
++        id: chargeActionProcess
++
++        property bool restoreConfiguredThresholds: false
++        property string errorText: ""
++
++        command: ["@sudo@", "-n", "@tlp@", restoreConfiguredThresholds ? "setcharge" : "fullcharge", "BAT0"]
++        running: false
++        stderr: StdioCollector {
++            onStreamFinished: chargeActionProcess.errorText = text.trim()
++        }
++        onExited: exitCode => {
++            if (exitCode === 0) {
++                if (restoreConfiguredThresholds) {
++                    ToastService.showInfo(I18n.tr("Charge limit restored"), I18n.tr("TLP restored the configured charge thresholds."));
++                } else {
++                    ToastService.showInfo(I18n.tr("Full charge enabled"), I18n.tr("TLP will restore the configured thresholds at boot."));
++                }
++            } else {
++                const details = errorText || I18n.tr("Process exited with code %1").arg(exitCode);
++                ToastService.showError(I18n.tr("Failed to update charge thresholds"), details);
++            }
++            chargeRefreshTimer.restart();
++        }
++    }
++
++    Timer {
++        id: chargeRefreshTimer
++
++        interval: 250
++        onTriggered: root.refreshChargeThresholds()
++    }
+ 
+     content: Component {
+         Rectangle {
+@@ -345,6 +420,71 @@
+                             }
+                         }
+                     }
++                }
++
++                StyledRect {
++                    width: parent.width
++                    height: chargeThresholdRow.implicitHeight + Theme.spacingM * 2
++                    radius: Theme.cornerRadius
++                    color: Theme.nestedSurface
++                    border.width: 0
++                    visible: root.chargeThresholds.available
++
++                    Row {
++                        id: chargeThresholdRow
++
++                        width: parent.width - Theme.spacingM * 2
++                        anchors.left: parent.left
++                        anchors.top: parent.top
++                        anchors.margins: Theme.spacingM
++                        spacing: Theme.spacingM
++
++                        Column {
++                            width: parent.width - chargeActionButton.width - parent.spacing
++                            spacing: Theme.spacingXS
++                            anchors.verticalCenter: parent.verticalCenter
++
++                            StyledText {
++                                text: I18n.tr("Charge thresholds")
++                                font.pixelSize: Theme.fontSizeMedium
++                                color: Theme.primary
++                                font.weight: Font.Medium
++                            }
++
++                            StyledText {
++                                text: I18n.tr("Active: %1–%2%").arg(root.chargeThresholds.start).arg(root.chargeThresholds.end)
++                                font.pixelSize: Theme.fontSizeSmall
++                                color: Theme.surfaceText
++                                font.weight: Font.Bold
++                            }
++
++                            StyledText {
++                                text: I18n.tr("TLP default: %1–%2%").arg(root.chargeThresholds.configuredStart).arg(root.chargeThresholds.configuredEnd)
++                                font.pixelSize: Theme.fontSizeSmall
++                                color: Theme.surfaceTextMedium
++                            }
++                        }
++
++                        DankButton {
++                            id: chargeActionButton
++
++                            text: {
++                                if (chargeActionProcess.running)
++                                    return I18n.tr("Applying...");
++                                if (root.fullChargeActive)
++                                    return I18n.tr("Restore %1% limit").arg(root.chargeThresholds.configuredEnd);
++                                return I18n.tr("Charge to 100%");
++                            }
++                            iconName: root.fullChargeActive ? "battery_saver" : "battery_charging_full"
++                            enabled: !chargeActionProcess.running
++                            anchors.verticalCenter: parent.verticalCenter
++                            onClicked: {
++                                chargeActionProcess.restoreConfiguredThresholds = root.fullChargeActive;
++                                chargeActionProcess.errorText = "";
++                                chargeActionProcess.running = true;
++                            }
++                        }
++                    }
+                 }
+ 
+                 // Individual battery details for multiple batteries
