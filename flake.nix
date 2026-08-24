@@ -90,6 +90,11 @@
           missingXdgFiles = builtins.filter (name: !(builtins.hasAttr name xdgFiles)) requiredXdgFiles;
         in
         {
+          ai-overview-control = xdgFiles."DankMaterialShell/plugins/aiOverviewControl".source;
+          dms-shell = evaluated.config.programs.dms-shell.package;
+          pi-sessions-plugin = xdgFiles."DankMaterialShell/plugins/piSessions".source;
+          workspace-finder-plugin = xdgFiles."DankMaterialShell/plugins/workspaceFinder".source;
+
           configuration =
             pkgs.runCommand "nixos-hyprland-configuration-check"
               {
