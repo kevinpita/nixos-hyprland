@@ -12,7 +12,9 @@ Declarative Hyprland and Dank Material Shell configuration for NixOS.
 
 Import `nixosModules.default`. ThinkPad battery controls are available through `nixosModules.thinkpadBattery`.
 
-The default module links writable DMS settings and the Hyprland Lua configuration from `~/nixos-hyprland`. Override `programs.nixos-hyprland.configDirectory` when the checkout is in a different location.
+The default module links writable DMS settings and loads the Hyprland Lua configuration from `~/nixos-hyprland`. Override `programs.nixos-hyprland.configDirectory` when the checkout is in a different location.
+
+Set `programs.nixos-hyprland.hostConfig` to an absolute Lua file path for monitor layout and other host-specific rules. The host file runs before the shared configuration.
 
 `session.json` is not part of this repository. DMS stores private runtime state in `~/.local/state/DankMaterialShell/session.json`.
 

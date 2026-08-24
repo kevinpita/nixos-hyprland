@@ -95,10 +95,18 @@ let
   ];
 in
 {
-  options.programs.nixos-hyprland.configDirectory = lib.mkOption {
-    type = lib.types.str;
-    default = "/home/${username}/nixos-hyprland";
-    description = "Absolute path to the writable nixos-hyprland checkout";
+  options.programs.nixos-hyprland = {
+    configDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/home/${username}/nixos-hyprland";
+      description = "Absolute path to the writable nixos-hyprland checkout";
+    };
+
+    hostConfig = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Optional absolute path to host-specific Hyprland Lua configuration";
+    };
   };
 
   config = {
@@ -140,8 +148,13 @@ in
           size = 24;
         };
 
-        xdg.configFile."hypr/hyprland.lua".source =
-          config.lib.file.mkOutOfStoreSymlink "${cfg.configDirectory}/config/hypr/hyprland.lua";
+        xdg.configFile."hypr/hyprland.lua".text =
+          lib.optionalString (cfg.hostConfig != null) ''
+            dofile("${cfg.hostConfig}")
+          ''
+          + ''
+            dofile("${cfg.configDirectory}/config/hypr/hyprland.lua")
+          '';
 
         home.packages = with pkgs; [
           inter

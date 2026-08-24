@@ -117,6 +117,7 @@
             assert evaluated.config.services.tlp.settings.START_CHARGE_THRESH_BAT0 == 75;
             assert evaluated.config.services.tlp.settings.STOP_CHARGE_THRESH_BAT0 == 80;
             assert evaluated.config.programs.nixos-hyprland.configDirectory == "/home/kevin/nixos-hyprland";
+            assert evaluated.config.programs.nixos-hyprland.hostConfig == null;
             assert missingXdgFiles == [ ];
             pkgs.writeText "nixos-hyprland-module-check" (
               builtins.toJSON {
