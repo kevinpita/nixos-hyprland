@@ -36,7 +36,7 @@ hl.config({
         resolve_binds_by_sym = true,
         follow_mouse = 1,
         touchpad = {
-            natural_scroll = false,
+            natural_scroll = true,
         },
     },
     cursor = {
@@ -272,8 +272,8 @@ for slot = 1, workspacesPerMonitor do
     hl.bind(mainMod .. " + SHIFT + " .. slot, move_to_workspace(slot))
 end
 
-hl.bind(mainMod .. " + mouse_down", scroll_workspace("m+1", -1))
-hl.bind(mainMod .. " + mouse_up", scroll_workspace("m-1", 1))
+hl.bind(mainMod .. " + mouse_down", scroll_workspace("m-1", 1))
+hl.bind(mainMod .. " + mouse_up", scroll_workspace("m+1", -1))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
