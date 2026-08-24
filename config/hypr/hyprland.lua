@@ -57,16 +57,28 @@ hl.gesture({
     action = "workspace",
 })
 
-local workspaceCount = 10
 local workspacesPerMonitor = 5
 
-for workspace = 1, workspaceCount do
-    hl.workspace_rule({
-        workspace = tostring(workspace),
-        monitor = workspace <= workspacesPerMonitor and mainMonitor or secondaryMonitor,
-        persistent = true,
-    })
+local function workspace_id(monitor_id, slot)
+    return monitor_id * workspacesPerMonitor + slot
 end
+
+local function configure_monitor_workspaces(monitor)
+    for slot = 1, workspacesPerMonitor do
+        hl.workspace_rule({
+            workspace = tostring(workspace_id(monitor.id, slot)),
+            monitor = monitor.name,
+            persistent = true,
+            default = slot == 1,
+        })
+    end
+end
+
+for _, monitor in ipairs(hl.get_monitors()) do
+    configure_monitor_workspaces(monitor)
+end
+
+hl.on("monitor.added", configure_monitor_workspaces)
 
 local mainMod = "SUPER"
 local dms = "dms ipc call "
@@ -165,12 +177,14 @@ end
 
 local function monitor_workspace_ids(monitor_id)
     local workspace_ids = {}
+    local first_workspace_id = workspace_id(monitor_id, 1)
+    local last_workspace_id = workspace_id(monitor_id, workspacesPerMonitor)
     for _, workspace in ipairs(hl.get_workspaces()) do
         local monitor = workspace.monitor
         if
             not workspace.special
-            and workspace.id >= 1
-            and workspace.id <= workspaceCount
+            and workspace.id >= first_workspace_id
+            and workspace.id <= last_workspace_id
             and monitor
             and monitor.id == monitor_id
         then
@@ -204,14 +218,33 @@ local function adjacent_workspace(offset)
     return nil
 end
 
-local function focus_or_drag_workspace(target_id)
+local function active_monitor_workspace_id(slot)
+    local monitor = hl.get_active_monitor()
+    return monitor and workspace_id(monitor.id, slot) or nil
+end
+
+local function focus_or_drag_workspace(slot)
     return function()
+        local target_id = active_monitor_workspace_id(slot)
+        if not target_id then
+            return
+        end
+
         if hl.is_key_down("Tab") then
             drag_workspace(target_id)
             return
         end
 
         hl.dispatch(hl.dsp.focus({ workspace = target_id }))
+    end
+end
+
+local function move_to_workspace(slot)
+    return function()
+        local target_id = active_monitor_workspace_id(slot)
+        if target_id then
+            hl.dispatch(hl.dsp.window.move({ workspace = target_id }))
+        end
     end
 end
 
@@ -234,10 +267,9 @@ hl.bind(mainMod .. " + Tab", function()
     workspaceDrag = nil
 end, { release = true })
 
-for workspace = 1, workspaceCount do
-    local key = workspace % 10
-    hl.bind(mainMod .. " + " .. key, focus_or_drag_workspace(workspace))
-    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = workspace }))
+for slot = 1, workspacesPerMonitor do
+    hl.bind(mainMod .. " + " .. slot, focus_or_drag_workspace(slot))
+    hl.bind(mainMod .. " + SHIFT + " .. slot, move_to_workspace(slot))
 end
 
 hl.bind(mainMod .. " + mouse_down", scroll_workspace("m+1", -1))
