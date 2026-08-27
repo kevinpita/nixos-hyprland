@@ -64,10 +64,10 @@ PluginComponent {
         return address;
     }
 
-    function focusSession(record) {
+    function sessionWindowAddress(record) {
         if (!CompositorService.isHyprland) {
             ToastService.showWarning("Cannot focus Pi session", "Hyprland is not active.");
-            return false;
+            return "";
         }
 
         const toplevels = CompositorService.sortedToplevels || [];
@@ -76,8 +76,7 @@ PluginComponent {
             for (let i = 0; i < toplevels.length; i++) {
                 const toplevel = toplevels[i];
                 if (toplevel && normalizedWindowAddress(toplevel.address) === windowAddress) {
-                    HyprlandService.focusWindow(toplevel.address);
-                    return true;
+                    return toplevel.address;
                 }
             }
         }
@@ -99,11 +98,10 @@ PluginComponent {
                     ? "The terminal window is no longer available."
                     : "Open this session and send one prompt to enable terminal focus.";
             ToastService.showWarning("Cannot focus Pi session", message);
-            return false;
+            return "";
         }
 
-        HyprlandService.focusWindow(matches[0].address);
-        return true;
+        return matches[0].address;
     }
 
     function updateNotifications(nextSessions, hasError) {
@@ -256,9 +254,21 @@ PluginComponent {
         PopoutComponent {
             id: popout
 
+            property string pendingWindowAddress: ""
+
             headerText: "Pi sessions"
             detailsText: root.summaryText()
             showCloseButton: true
+
+            Connections {
+                target: popout.parentPopout
+
+                function onPopoutClosed() {
+                    const address = popout.pendingWindowAddress;
+                    popout.pendingWindowAddress = "";
+                    if (address) HyprlandService.focusWindow(address);
+                }
+            }
 
             Item {
                 width: parent.width
@@ -346,9 +356,16 @@ PluginComponent {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (root.focusSession(modelData) && popout.closePopout) {
+                                const address = root.sessionWindowAddress(modelData);
+                                if (!address) return;
+
+                                if (popout.closePopout && popout.parentPopout) {
+                                    popout.pendingWindowAddress = address;
                                     popout.closePopout();
+                                    return;
                                 }
+
+                                HyprlandService.focusWindow(address);
                             }
                         }
                     }
