@@ -115,6 +115,8 @@ in
       withUWSM = true;
     };
 
+    services.gvfs.enable = true;
+
     services.greetd = {
       enable = true;
       useTextGreeter = true;
@@ -159,6 +161,7 @@ in
         home.packages = with pkgs; [
           inter
           libnotify
+          nautilus
           nixos-artwork.wallpapers.catppuccin-mocha
           omasnap
           playerctl

@@ -98,6 +98,7 @@ hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("super-double-tap"), { release 
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("uwsm app -- ghostty"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("uwsm app -- brave"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("uwsm app -- google-chrome-stable"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("uwsm app -- nautilus --new-window"))
 hl.bind(mainMod .. " + M", focus_or_launch("class:^(com.mitchellh.ghostty.minidesk)$", "uwsm app -- ghostty --class=com.mitchellh.ghostty.minidesk -e herdr-minidesk"))
 hl.bind(mainMod .. " + S", focus_or_launch("class:^(Slack)$", "uwsm app -- slack"))
 hl.bind(mainMod .. " + T", focus_or_launch("class:^(org.telegram.desktop|TelegramDesktop)$", "uwsm app -- Telegram"))
