@@ -8,17 +8,19 @@
     "pillProviders": "codex"
   },
   "calculator": {
-    "enabled": true
+    "enabled": true,
+    "trigger": "="
   },
   "dankCalendarAgenda": {
     "enabled": true
   },
   "dockerManager": {
     "enabled": true,
-    "terminalApp": "ghostty"
+    "terminalApp": "ghostty",
+    "groupByCompose": false
   },
   "emojiLauncher": {
-    "enabled": true
+    "enabled": true,
   },
   "piSessions": {
     "enabled": true
