@@ -13,6 +13,9 @@
   "dankCalendarAgenda": {
     "enabled": true
   },
+  "emojiLauncher": {
+    "enabled": true
+  },
   "piSessions": {
     "enabled": true
   },

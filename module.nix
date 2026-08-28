@@ -3,6 +3,7 @@
     ./modules/hyprland.nix
     ./modules/dms-plugins.nix
     ./modules/dank-calendar.nix
+    ./modules/dms-emoji-launcher.nix
     ./modules/ai-quotas.nix
     ./modules/calculator.nix
     ./modules/pi-sessions.nix
