@@ -1,5 +1,42 @@
 {
   "nodes": {
+    "dank-qml-common": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787616035,
+        "narHash": "sha256-L4SjLZuMLP1Z3CzhE3QNwRqaPMF3X4gRchhZAtAS3zM=",
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "rev": "fa6df81f05e7e0e4acd82c46afdca45cb0ef98e6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "type": "github"
+      }
+    },
+    "dankcalendar": {
+      "inputs": {
+        "dank-qml-common": "dank-qml-common",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787664690,
+        "narHash": "sha256-o48GaID++VEgMe41lb+MJi/+6f6PqWOAFO8JTe4Rr+Y=",
+        "owner": "AvengeMedia",
+        "repo": "dankcalendar",
+        "rev": "29bf5558ffcb1460d703b70ab687fa3b66a5fb5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "dankcalendar",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -7,11 +44,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787487906,
-        "narHash": "sha256-zIdM+8teujHm5hc5MIPDnV7k2UeOOT/pFyFtWjOCwsY=",
+        "lastModified": 1787797243,
+        "narHash": "sha256-8+Q7NOB7RPajRjA4pbCDLzqH+MTjnG9x6LUPLfL2joA=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "cfba7ad5886b342b8dd63ba74354b3853ea4cfc9",
+        "rev": "99c9ec63390f1d8c14d95d9e8b17cc29cfbd4e11",
         "type": "github"
       },
       "original": {
@@ -22,11 +59,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1787360063,
-        "narHash": "sha256-dt4WdcvsA8/RCe+VZZwqU0X+XMM3wBbGCWA0/sFWzGo=",
+        "lastModified": 1787736819,
+        "narHash": "sha256-cV5xEJJK3BvhU8rEd4mC9UsmDi5qscv/kzGPhBRC5WA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2c423e03bbafcff28bfadc6781a4a8257f205cb5",
+        "rev": "9fbb54b33e91ee4ca368e35a78e0613c720600b3",
         "type": "github"
       },
       "original": {
@@ -38,6 +75,7 @@
     },
     "root": {
       "inputs": {
+        "dankcalendar": "dankcalendar",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs"
       }

@@ -18,6 +18,16 @@ Set `programs.nixos-hyprland.hostConfig` to an absolute Lua file path for monito
 
 `session.json` is not part of this repository. DMS stores private runtime state in `~/.local/state/DankMaterialShell/session.json`.
 
+## Connect Google Calendar
+
+The default module starts DankCalendar and adds its agenda widget to the DMS bar. After the first rebuild, connect an account:
+
+```bash
+dcal account add google
+```
+
+Complete the Google authorization in the browser. DankCalendar stores account data outside this repository and keeps OAuth tokens in the desktop keyring. Use `dcal sync` to request an immediate sync.
+
 ## Develop locally
 
 Keep the GitHub input as the canonical lock. Use a local override to test uncommitted changes:

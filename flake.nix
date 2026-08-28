@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    dankcalendar = {
+      url = "github:AvengeMedia/dankcalendar";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -13,6 +18,7 @@
   outputs =
     {
       self,
+      dankcalendar,
       home-manager,
       nixpkgs,
     }:
@@ -52,7 +58,10 @@
       });
 
       nixosModules = {
-        default = import ./module.nix;
+        default = {
+          imports = [ (import ./module.nix) ];
+          _module.args = { inherit dankcalendar; };
+        };
         thinkpadBattery = import ./modules/thinkpad-battery.nix;
       };
 
@@ -82,6 +91,7 @@
           requiredXdgFiles = [
             "DankMaterialShell/plugin_settings.json"
             "DankMaterialShell/plugins/aiOverviewControl"
+            "DankMaterialShell/plugins/dankCalendarAgenda"
             "DankMaterialShell/plugins/piSessions"
             "DankMaterialShell/plugins/workspaceFinder"
             "DankMaterialShell/settings.json"
@@ -91,6 +101,8 @@
         in
         {
           ai-overview-control = xdgFiles."DankMaterialShell/plugins/aiOverviewControl".source;
+          dank-calendar = evaluated.config.home-manager.users.kevin.programs.dank-calendar.package;
+          dank-calendar-plugin = xdgFiles."DankMaterialShell/plugins/dankCalendarAgenda".source;
           dms-shell = evaluated.config.programs.dms-shell.package;
           pi-sessions-plugin = xdgFiles."DankMaterialShell/plugins/piSessions".source;
           workspace-finder-plugin = xdgFiles."DankMaterialShell/plugins/workspaceFinder".source;
@@ -112,7 +124,10 @@
           module =
             assert evaluated.config.programs.hyprland.enable;
             assert evaluated.config.programs.dms-shell.enable;
+            assert evaluated.config.services.gnome.gnome-keyring.enable;
             assert evaluated.config.services.greetd.enable;
+            assert evaluated.config.home-manager.users.kevin.programs.dank-calendar.enable;
+            assert evaluated.config.home-manager.users.kevin.programs.dank-calendar.systemd.enable;
             assert evaluated.config.services.tlp.enable;
             assert evaluated.config.services.tlp.settings.START_CHARGE_THRESH_BAT0 == 75;
             assert evaluated.config.services.tlp.settings.STOP_CHARGE_THRESH_BAT0 == 80;
@@ -121,6 +136,7 @@
             assert missingXdgFiles == [ ];
             pkgs.writeText "nixos-hyprland-module-check" (
               builtins.toJSON {
+                calendar = evaluated.config.home-manager.users.kevin.programs.dank-calendar.enable;
                 configDirectory = evaluated.config.programs.nixos-hyprland.configDirectory;
                 dms = evaluated.config.programs.dms-shell.enable;
                 hyprland = evaluated.config.programs.hyprland.enable;

@@ -607,6 +607,7 @@
       "rightWidgets": [
         "systemTray",
         "notificationButton",
+        "dankCalendarAgenda",
         "aiOverviewControl",
         "piSessions",
         "battery",
