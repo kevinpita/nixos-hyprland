@@ -51,6 +51,9 @@
       );
 
       packages = forAllSystems (system: {
+        pixel-buds-control =
+          nixpkgs.legacyPackages.${system}.callPackage ./packages/pixel-buds-control/package.nix
+            { };
         pi-session-status =
           nixpkgs.legacyPackages.${system}.callPackage ./packages/pi-session-status/package.nix
             { };
@@ -96,6 +99,7 @@
             "DankMaterialShell/plugins/dankCalendarAgenda"
             "DankMaterialShell/plugins/emojiLauncher"
             "DankMaterialShell/plugins/piSessions"
+            "DankMaterialShell/plugins/pixelBuds"
             "DankMaterialShell/plugins/workspaceFinder"
             "DankMaterialShell/settings.json"
             "hypr/hyprland.lua"
@@ -111,6 +115,8 @@
           docker-manager-plugin = xdgFiles."DankMaterialShell/plugins/DockerManager".source;
           emoji-launcher-plugin = xdgFiles."DankMaterialShell/plugins/emojiLauncher".source;
           pi-sessions-plugin = xdgFiles."DankMaterialShell/plugins/piSessions".source;
+          pixel-buds-control = self.packages.${system}.pixel-buds-control;
+          pixel-buds-plugin = xdgFiles."DankMaterialShell/plugins/pixelBuds".source;
           workspace-finder-plugin = xdgFiles."DankMaterialShell/plugins/workspaceFinder".source;
 
           configuration =
@@ -149,6 +155,17 @@
                 tlp = evaluated.config.services.tlp.enable;
               }
             );
+
+          pixel-buds-control-tests =
+            pkgs.runCommand "pixel-buds-control-test"
+              {
+                nativeBuildInputs = [ pkgs.jq ];
+              }
+              ''
+                PIXEL_BUDS_CONTROL_BIN=${self.packages.${system}.pixel-buds-control}/bin/pixel-buds-control \
+                  bash ${./packages/pixel-buds-control/test.sh}
+                touch "$out"
+              '';
 
           pi-sessions =
             pkgs.runCommand "pi-sessions-test"

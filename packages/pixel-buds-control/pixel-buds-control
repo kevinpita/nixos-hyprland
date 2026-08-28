@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+pbpctrl_bin=${PBPCTRL_BIN:-pbpctrl}
+timeout_seconds=${PIXEL_BUDS_TIMEOUT_SECONDS:-6}
+device_args=()
+
+usage() {
+  cat <<'EOF'
+Usage:
+  pixel-buds-control [--device MAC] status
+  pixel-buds-control [--device MAC] set SETTING VALUE
+
+Settings:
+  anc               off | active | aware
+  ohd               true | false
+  multipoint        true | false
+  volume-eq         true | false
+  speech-detection  true | false
+EOF
+}
+
+run_pbpctrl() {
+  timeout --signal=TERM --kill-after=1 "${timeout_seconds}" \
+    "${pbpctrl_bin}" "${device_args[@]}" "$@"
+}
+
+battery_value() {
+  local label=$1
+  local output=$2
+  local line
+  local pattern='([0-9]+)%[[:space:]]+\(([^)]*)\)'
+
+  line=$(grep -E "^${label}:[[:space:]]+" <<<"${output}" | head -n 1 || true)
+  if [[ ${line} =~ ${pattern} ]]; then
+    local charging=null
+    case ${BASH_REMATCH[2]} in
+      charging) charging=true ;;
+      "not charging") charging=false ;;
+    esac
+    printf '%s %s\n' "${BASH_REMATCH[1]}" "${charging}"
+    return
+  fi
+
+  printf 'null null\n'
+}
+
+setting_value() {
+  local setting=$1
+  local value
+
+  if ! value=$(run_pbpctrl get "${setting}" 2>/dev/null); then
+    printf 'null\n'
+    return
+  fi
+
+  value=${value//$'\n'/}
+  case ${value} in
+    true|false) printf '%s\n' "${value}" ;;
+    *) printf 'null\n' ;;
+  esac
+}
+
+status_command() {
+  local battery_output
+  if ! battery_output=$(run_pbpctrl show battery 2>/dev/null); then
+    jq -n '{
+      schema: 1,
+      connected: false,
+      error: "Pixel Buds are not connected.",
+      battery: {
+        left: {level: null, charging: null},
+        right: {level: null, charging: null},
+        case: {level: null, charging: null}
+      },
+      anc: "unknown",
+      settings: {
+        onHeadDetection: null,
+        multipoint: null,
+        volumeEq: null,
+        speechDetection: null
+      }
+    }'
+    return
+  fi
+
+  local left_level left_charging right_level right_charging case_level case_charging
+  read -r left_level left_charging < <(battery_value "left bud" "${battery_output}")
+  read -r right_level right_charging < <(battery_value "right bud" "${battery_output}")
+  read -r case_level case_charging < <(battery_value "case" "${battery_output}")
+
+  local anc
+  if ! anc=$(run_pbpctrl get anc 2>/dev/null); then
+    anc=unknown
+  fi
+  anc=${anc//$'\n'/}
+  case ${anc} in
+    off|active|aware) ;;
+    *) anc=unknown ;;
+  esac
+
+  local on_head_detection multipoint volume_eq speech_detection
+  on_head_detection=$(setting_value ohd)
+  multipoint=$(setting_value multipoint)
+  volume_eq=$(setting_value volume-eq)
+  speech_detection=$(setting_value speech-detection)
+
+  jq -n \
+    --argjson leftLevel "${left_level}" \
+    --argjson leftCharging "${left_charging}" \
+    --argjson rightLevel "${right_level}" \
+    --argjson rightCharging "${right_charging}" \
+    --argjson caseLevel "${case_level}" \
+    --argjson caseCharging "${case_charging}" \
+    --arg anc "${anc}" \
+    --argjson onHeadDetection "${on_head_detection}" \
+    --argjson multipoint "${multipoint}" \
+    --argjson volumeEq "${volume_eq}" \
+    --argjson speechDetection "${speech_detection}" \
+    '{
+      schema: 1,
+      connected: true,
+      error: null,
+      battery: {
+        left: {level: $leftLevel, charging: $leftCharging},
+        right: {level: $rightLevel, charging: $rightCharging},
+        case: {level: $caseLevel, charging: $caseCharging}
+      },
+      anc: $anc,
+      settings: {
+        onHeadDetection: $onHeadDetection,
+        multipoint: $multipoint,
+        volumeEq: $volumeEq,
+        speechDetection: $speechDetection
+      }
+    }'
+}
+
+set_command() {
+  local setting=${1:-}
+  local value=${2:-}
+
+  case "${setting}:${value}" in
+    anc:off|anc:active|anc:aware|ohd:true|ohd:false|multipoint:true|multipoint:false|volume-eq:true|volume-eq:false|speech-detection:true|speech-detection:false)
+      ;;
+    *)
+      printf 'Invalid Pixel Buds setting: %s=%s\n' "${setting}" "${value}" >&2
+      usage >&2
+      return 2
+      ;;
+  esac
+
+  run_pbpctrl set "${setting}" "${value}" >/dev/null
+}
+
+if [[ ${1:-} == "--device" ]]; then
+  if [[ -z ${2:-} ]]; then
+    usage >&2
+    exit 2
+  fi
+  device_args=(--device "$2")
+  shift 2
+fi
+
+case ${1:-status} in
+  status)
+    status_command
+    ;;
+  set)
+    shift
+    set_command "$@"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

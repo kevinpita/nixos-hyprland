@@ -8,6 +8,7 @@
     ./modules/calculator.nix
     ./modules/docker-manager.nix
     ./modules/pi-sessions.nix
+    ./modules/pixel-buds.nix
     ./modules/workspace-finder.nix
     ./modules/desktop-images.nix
     ./modules/dms-patches.nix

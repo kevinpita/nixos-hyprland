@@ -1,0 +1,14 @@
+{
+  "id": "pixelBuds",
+  "name": "Pixel Buds Pro 2",
+  "description": "Shows separate earbud and case batteries and controls Pixel Buds listening modes and quick settings",
+  "version": "1.0.0",
+  "author": "Kevin Pita",
+  "type": "widget",
+  "capabilities": ["dankbar-widget", "bluetooth", "audio", "process"],
+  "component": "./PixelBudsWidget.qml",
+  "icon": "earbuds",
+  "requires_dms": ">=1.5.0",
+  "requires": ["pixel-buds-control"],
+  "permissions": ["process"]
+}

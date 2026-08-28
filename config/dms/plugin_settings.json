@@ -23,6 +23,9 @@
   "piSessions": {
     "enabled": true
   },
+  "pixelBuds": {
+    "enabled": true
+  },
   "workspaceFinder": {
     "enabled": true
   }
