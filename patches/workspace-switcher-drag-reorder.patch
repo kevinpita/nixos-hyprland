@@ -1,0 +1,80 @@
+--- a/quickshell/Modules/DankBar/Widgets/WorkspaceSwitcher.qml
++++ b/quickshell/Modules/DankBar/Widgets/WorkspaceSwitcher.qml
+@@ -269,6 +269,38 @@
+         return ws.id > 0 ? ws.id : "name:" + (ws.name ?? "");
+     }
+ 
++    function reorderHyprlandWorkspace(sourceId, targetId) {
++        if (!HyprlandService.luaConfigActive || sourceId <= 0 || targetId <= 0 || sourceId === targetId)
++            return;
++
++        const temporaryId = 2147483647;
++        const moves = [{
++                workspace: sourceId,
++                id: temporaryId
++            }];
++
++        if (sourceId < targetId) {
++            for (let id = sourceId + 1; id <= targetId; id++)
++                moves.push({
++                    workspace: id,
++                    id: id - 1
++                });
++        } else {
++            for (let id = sourceId - 1; id >= targetId; id--)
++                moves.push({
++                    workspace: id,
++                    id: id + 1
++                });
++        }
++
++        moves.push({
++            workspace: temporaryId,
++            id: targetId
++        });
++        for (const move of moves)
++            Hyprland.dispatch(`hl.dsp.workspace.change_id({ workspace = ${move.workspace}, id = ${move.id} })`);
++    }
++
+     function getHyprlandWorkspaces() {
+         const workspaces = Hyprland.workspaces?.values || [];
+         if (workspaces.length === 0) {
+@@ -1026,6 +1058,7 @@
+     property int dragSourceIndex: -1
+     property int dragTargetIndex: -1
+     property bool suppressShiftAnimation: false
++    readonly property bool workspaceDragReorderSupported: CompositorService.isNiri || (CompositorService.isHyprland && HyprlandService.luaConfigActive)
+ 
+     onWorkspaceListChanged: {
+         if (dragSourceIndex >= 0) {
+@@ -1411,14 +1444,14 @@
+                     property bool mousePressed: false
+ 
+                     onPressed: mouse => {
+-                        if (mouse.button === Qt.LeftButton && CompositorService.isNiri && SettingsData.workspaceDragReorder && !isPlaceholder) {
++                        if (mouse.button === Qt.LeftButton && root.workspaceDragReorderSupported && SettingsData.workspaceDragReorder && !isPlaceholder) {
+                             mousePressed = true;
+                             dragHandler.dragStartPos = Qt.point(mouse.x, mouse.y);
+                         }
+                     }
+ 
+                     onPositionChanged: mouse => {
+-                        if (!mousePressed || !CompositorService.isNiri || !SettingsData.workspaceDragReorder || isPlaceholder)
++                        if (!mousePressed || !root.workspaceDragReorderSupported || !SettingsData.workspaceDragReorder || isPlaceholder)
+                             return;
+ 
+                         if (!dragHandler.dragging) {
+@@ -1457,10 +1490,12 @@
+                             const sourceWs = root.workspaceList[root.dragSourceIndex];
+                             const targetWs = root.workspaceList[root.dragTargetIndex];
+ 
+-                            if (sourceWs && targetWs && sourceWs.id !== undefined && targetWs.idx !== undefined) {
++                            if (CompositorService.isNiri && sourceWs && targetWs && sourceWs.id !== undefined && targetWs.idx !== undefined) {
+                                 root.suppressShiftAnimation = true;
+                                 NiriService.moveWorkspaceToIndex(sourceWs.id, targetWs.idx);
+                                 Qt.callLater(() => root.suppressShiftAnimation = false);
++                            } else if (CompositorService.isHyprland && sourceWs && targetWs) {
++                                root.reorderHyprlandWorkspace(sourceWs.id, targetWs.id);
+                             }
+                         }
+ 
