@@ -6,6 +6,7 @@
     ./modules/dms-emoji-launcher.nix
     ./modules/ai-quotas.nix
     ./modules/calculator.nix
+    ./modules/docker-manager.nix
     ./modules/pi-sessions.nix
     ./modules/workspace-finder.nix
     ./modules/desktop-images.nix

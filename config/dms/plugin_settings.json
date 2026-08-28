@@ -13,6 +13,10 @@
   "dankCalendarAgenda": {
     "enabled": true
   },
+  "dockerManager": {
+    "enabled": true,
+    "terminalApp": "ghostty"
+  },
   "emojiLauncher": {
     "enabled": true
   },

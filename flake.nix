@@ -92,6 +92,7 @@
             "DankMaterialShell/plugin_settings.json"
             "DankMaterialShell/plugins/aiOverviewControl"
             "DankMaterialShell/plugins/Calculator"
+            "DankMaterialShell/plugins/DockerManager"
             "DankMaterialShell/plugins/dankCalendarAgenda"
             "DankMaterialShell/plugins/emojiLauncher"
             "DankMaterialShell/plugins/piSessions"
@@ -107,6 +108,7 @@
           dank-calendar = evaluated.config.home-manager.users.kevin.programs.dank-calendar.package;
           dank-calendar-plugin = xdgFiles."DankMaterialShell/plugins/dankCalendarAgenda".source;
           dms-shell = evaluated.config.programs.dms-shell.package;
+          docker-manager-plugin = xdgFiles."DankMaterialShell/plugins/DockerManager".source;
           emoji-launcher-plugin = xdgFiles."DankMaterialShell/plugins/emojiLauncher".source;
           pi-sessions-plugin = xdgFiles."DankMaterialShell/plugins/piSessions".source;
           workspace-finder-plugin = xdgFiles."DankMaterialShell/plugins/workspaceFinder".source;

@@ -610,6 +610,7 @@
         "dankCalendarAgenda",
         "aiOverviewControl",
         "piSessions",
+        "dockerManager",
         "battery",
         {
           "id": "idleInhibitor",
