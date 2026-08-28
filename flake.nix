@@ -91,6 +91,7 @@
           requiredXdgFiles = [
             "DankMaterialShell/plugin_settings.json"
             "DankMaterialShell/plugins/aiOverviewControl"
+            "DankMaterialShell/plugins/Calculator"
             "DankMaterialShell/plugins/dankCalendarAgenda"
             "DankMaterialShell/plugins/piSessions"
             "DankMaterialShell/plugins/workspaceFinder"
@@ -101,6 +102,7 @@
         in
         {
           ai-overview-control = xdgFiles."DankMaterialShell/plugins/aiOverviewControl".source;
+          calculator-plugin = xdgFiles."DankMaterialShell/plugins/Calculator".source;
           dank-calendar = evaluated.config.home-manager.users.kevin.programs.dank-calendar.package;
           dank-calendar-plugin = xdgFiles."DankMaterialShell/plugins/dankCalendarAgenda".source;
           dms-shell = evaluated.config.programs.dms-shell.package;

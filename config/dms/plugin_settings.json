@@ -7,6 +7,9 @@
     "densityMode": "compact",
     "pillProviders": "codex"
   },
+  "calculator": {
+    "enabled": true
+  },
   "dankCalendarAgenda": {
     "enabled": true
   },
