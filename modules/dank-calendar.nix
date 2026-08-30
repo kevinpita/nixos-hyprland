@@ -5,11 +5,16 @@
   ...
 }:
 let
-  dankCalendarAgenda = pkgs.fetchFromGitHub {
+  dankCalendarAgendaSource = pkgs.fetchFromGitHub {
     owner = "arqueon";
     repo = "dms-dankcalendar";
     rev = "a592b4954ded272303d76fe5c85663a0fad1cdaf";
     hash = "sha256-Ud7I1+EIDCXep/02mCR8wwu1D66jy/F6VzjX0tvsvbo=";
+  };
+  dankCalendarAgenda = pkgs.applyPatches {
+    name = "dms-dankcalendar";
+    src = dankCalendarAgendaSource;
+    patches = [ ../patches/dank-calendar-hide-tooltip-on-click.patch ];
   };
 in
 {

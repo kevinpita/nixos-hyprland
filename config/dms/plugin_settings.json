@@ -12,7 +12,8 @@
     "trigger": "="
   },
   "dankCalendarAgenda": {
-    "enabled": true
+    "enabled": true,
+    "dynamicWidth": true
   },
   "dockerManager": {
     "enabled": true,
@@ -20,12 +21,15 @@
     "groupByCompose": false
   },
   "emojiLauncher": {
-    "enabled": true,
+    "enabled": true
   },
   "piSessions": {
     "enabled": true
   },
   "pixelBuds": {
+    "enabled": true
+  },
+  "timeManager": {
     "enabled": true
   },
   "workspaceFinder": {

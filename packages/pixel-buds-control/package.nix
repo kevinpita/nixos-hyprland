@@ -3,6 +3,7 @@
   gnugrep,
   jq,
   pbpctrl,
+  util-linux,
   writeShellApplication,
 }:
 writeShellApplication {
@@ -12,6 +13,7 @@ writeShellApplication {
     gnugrep
     jq
     pbpctrl
+    util-linux
   ];
   text = builtins.readFile ./pixel-buds-control;
 }

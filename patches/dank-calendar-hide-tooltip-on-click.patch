@@ -1,0 +1,52 @@
+diff --git a/DankCalendarWidget.qml b/DankCalendarWidget.qml
+--- a/DankCalendarWidget.qml
++++ b/DankCalendarWidget.qml
+@@ -390,6 +390,8 @@
+     function showEventTooltip(pill) {
+         if (!root.showTooltip || !pill || !root.parentScreen)
+             return ;
++        if (PopoutManager.getActivePopout(root.parentScreen))
++            return;
+ 
+         var screen = root.parentScreen;
+         var edge = root.axis?.edge ?? (root.isVertical ? "left" : "top");
+@@ -991,9 +993,16 @@
+             implicitWidth: hRow.implicitWidth
+             implicitHeight: hRow.implicitHeight
+ 
+-            // Middle click on the pill: toggle DankCalendar directly (left
+-            // opens the popout, right refreshes). Only MiddleButton is
+-            // accepted, so left/right fall through to BasePill.
++            TapHandler {
++                acceptedButtons: Qt.LeftButton
++                onTapped: {
++                    root.hideEventTooltip()
++                    root.triggerPopout()
++                }
++            }
++
++            // Middle click toggles DankCalendar. Right-click falls through to
++            // BasePill and refreshes the calendar data.
+             MouseArea {
+                 anchors.fill: parent
+                 // Cover BasePill's padding too — middle clicks on the
+@@ -1101,9 +1110,16 @@
+             implicitWidth: vCol.implicitWidth
+             implicitHeight: vCol.implicitHeight
+ 
+-            // Middle click on the pill: toggle DankCalendar directly (left
+-            // opens the popout, right refreshes). Only MiddleButton is
+-            // accepted, so left/right fall through to BasePill.
++            TapHandler {
++                acceptedButtons: Qt.LeftButton
++                onTapped: {
++                    root.hideEventTooltip()
++                    root.triggerPopout()
++                }
++            }
++
++            // Middle click toggles DankCalendar. Right-click falls through to
++            // BasePill and refreshes the calendar data.
+             MouseArea {
+                 anchors.fill: parent
+                 // Cover BasePill's padding too — middle clicks on the

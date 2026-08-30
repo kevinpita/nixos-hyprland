@@ -25,6 +25,20 @@ run_pbpctrl() {
     "${pbpctrl_bin}" "${device_args[@]}" "$@"
 }
 
+acquire_control_lock() {
+  local lock_root=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}
+  local lock_path="${lock_root}/pixel-buds-control-${UID}.lock"
+
+  if ! exec {control_lock_fd}>"${lock_path}"; then
+    printf 'Cannot open Pixel Buds control lock: %s\n' "${lock_path}" >&2
+    return 1
+  fi
+  if ! flock "${control_lock_fd}"; then
+    printf 'Cannot acquire Pixel Buds control lock: %s\n' "${lock_path}" >&2
+    return 1
+  fi
+}
+
 battery_value() {
   local label=$1
   local output=$2
@@ -164,10 +178,12 @@ fi
 
 case ${1:-status} in
   status)
+    acquire_control_lock || exit 1
     status_command
     ;;
   set)
     shift
+    acquire_control_lock || exit 1
     set_command "$@"
     ;;
   -h|--help|help)

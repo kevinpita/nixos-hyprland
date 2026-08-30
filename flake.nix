@@ -100,6 +100,7 @@
             "DankMaterialShell/plugins/emojiLauncher"
             "DankMaterialShell/plugins/piSessions"
             "DankMaterialShell/plugins/pixelBuds"
+            "DankMaterialShell/plugins/timeManager"
             "DankMaterialShell/plugins/workspaceFinder"
             "DankMaterialShell/settings.json"
             "hypr/hyprland.lua"
@@ -117,6 +118,7 @@
           pi-sessions-plugin = xdgFiles."DankMaterialShell/plugins/piSessions".source;
           pixel-buds-control = self.packages.${system}.pixel-buds-control;
           pixel-buds-plugin = xdgFiles."DankMaterialShell/plugins/pixelBuds".source;
+          time-manager-plugin = xdgFiles."DankMaterialShell/plugins/timeManager".source;
           workspace-finder-plugin = xdgFiles."DankMaterialShell/plugins/workspaceFinder".source;
 
           configuration =
