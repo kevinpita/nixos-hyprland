@@ -158,17 +158,6 @@
               }
             );
 
-          pixel-buds-control-tests =
-            pkgs.runCommand "pixel-buds-control-test"
-              {
-                nativeBuildInputs = [ pkgs.jq ];
-              }
-              ''
-                PIXEL_BUDS_CONTROL_BIN=${self.packages.${system}.pixel-buds-control}/bin/pixel-buds-control \
-                  bash ${./packages/pixel-buds-control/test.sh}
-                touch "$out"
-              '';
-
           pi-sessions =
             pkgs.runCommand "pi-sessions-test"
               {

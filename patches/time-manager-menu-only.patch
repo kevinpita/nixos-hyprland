@@ -1,0 +1,220 @@
+--- a/TimeManagerWidget.qml
++++ b/TimeManagerWidget.qml
+@@ -79,6 +79,7 @@
+     readonly property bool isPaused: !isRunning && globalRemainingMs.value > 0 && globalRemainingMs.value < globalTotalMs.value
+     readonly property bool isFinished: !isRunning && globalRemainingMs.value === 0 && globalTotalMs.value > 0
+     readonly property bool isIdle: globalTotalMs.value === 0
++    readonly property bool showPillContent: isRunning || isFinished
+     readonly property string pomodoroPhase: globalPomodoroPhase.value || "work"
+     readonly property int pomodoroSession: globalPomodoroSession.value || 1
+ 
+@@ -154,16 +155,6 @@
+     }
+ 
+     // ── Core actions ──
+-    function cycleMode() {
+-        var modes = ["timer", "stopwatch", "pomodoro"];
+-        var idx = modes.indexOf(currentMode);
+-        var next = modes[(idx + 1) % modes.length];
+-        resetStop();
+-        globalMode.set(next);
+-        if (pluginService)
+-            pluginService.savePluginData(pluginId, "lastMode", next);
+-    }
+-
+     function setMode(mode) {
+         resetStop();
+         globalMode.set(mode);
+@@ -237,14 +228,6 @@
+         globalWallAccum.set(0);
+     }
+ 
+-    function adjustTime(deltaSeconds) {
+-        if ((isPaused || isIdle) && currentMode === "timer") {
+-            var newVal = Math.max(0, Math.min(globalRemainingMs.value + deltaSeconds * 1000, 86400000));
+-            globalRemainingMs.set(newVal);
+-            globalTotalMs.set(newVal);
+-        }
+-    }
+-
+     function playAlarm() {
+         if (soundPath !== "")
+             Proc.runCommand("dtm-alarm", ["paplay", soundPath], null, 0);
+@@ -326,7 +309,6 @@
+     //  Pill actions
+     // ──────────────────────────────────────────────
+     pillClickAction: null
+-    pillRightClickAction: function () { resetStop(); }
+ 
+     // ──────────────────────────────────────────────
+     //  horizontalBarPill
+@@ -347,19 +329,13 @@
+                     color: root.pillColor
+                     anchors.verticalCenter: parent.verticalCenter
+                     visible: root.showPillIcon
+-
+-                    MouseArea {
+-                        anchors.fill: parent
+-                        cursorShape: Qt.PointingHandCursor
+-                        onClicked: root.cycleMode()
+-                    }
+                 }
+ 
+                 Item {
+                     width: 72
+                     height: 8
+                     anchors.verticalCenter: parent.verticalCenter
+-                    visible: root.displayMode === "progress" && !root.isIdle
++                    visible: root.displayMode === "progress" && root.showPillContent
+ 
+                     Rectangle {
+                         anchors.fill: parent
+@@ -374,16 +350,6 @@
+                         radius: 4
+                         color: root.pillColor
+                     }
+-
+-                    MouseArea {
+-                        anchors.fill: parent
+-                        cursorShape: Qt.PointingHandCursor
+-                        onClicked: root.startPause()
+-                        onWheel: function (wheelEvent) {
+-                            var delta = wheelEvent.angleDelta.y > 0 ? 60 : -60;
+-                            root.adjustTime(delta);
+-                        }
+-                    }
+                 }
+ 
+                 StyledText {
+@@ -393,17 +359,7 @@
+                     font.pixelSize: Theme.fontSizeMedium
+                     isMonospace: true
+                     anchors.verticalCenter: parent.verticalCenter
+-                    visible: root.displayMode !== "progress" || root.isIdle
+-
+-                    MouseArea {
+-                        anchors.fill: parent
+-                        cursorShape: Qt.PointingHandCursor
+-                        onClicked: root.startPause()
+-                        onWheel: function (wheelEvent) {
+-                            var delta = wheelEvent.angleDelta.y > 0 ? 60 : -60;
+-                            root.adjustTime(delta);
+-                        }
+-                    }
++                    visible: root.showPillContent && root.displayMode !== "progress"
+                 }
+             }
+         }
+@@ -414,9 +370,12 @@
+     // ──────────────────────────────────────────────
+     verticalBarPill: Component {
+         Item {
+-            implicitWidth: Math.max(modeIconV.width + Theme.spacingS, contentV.width + Theme.spacingS)
++            implicitWidth: Math.max(
++                root.showPillIcon ? modeIconV.width + Theme.spacingS : 0,
++                root.showPillContent ? contentV.width + Theme.spacingS : 0
++            )
+             implicitHeight: (root.showPillIcon ? modeIconV.height + Theme.spacingXS : 0)
+-                + contentV.height + Theme.spacingXS
++                + (root.showPillContent ? contentV.height + Theme.spacingXS : 0)
+ 
+             Column {
+                 spacing: Theme.spacingXS
+@@ -429,27 +388,22 @@
+                     color: root.pillColor
+                     anchors.horizontalCenter: parent.horizontalCenter
+                     visible: root.showPillIcon
+-
+-                    MouseArea {
+-                        anchors.fill: parent
+-                        cursorShape: Qt.PointingHandCursor
+-                        onClicked: root.cycleMode()
+-                    }
+                 }
+ 
+                 Item {
+                     id: contentV
+                     width: Math.max(progressBarV.width, timeTextV.width)
+-                    height: root.displayMode === "progress" && !root.isIdle
++                    height: root.displayMode === "progress" && root.showPillContent
+                         ? progressBarV.height : timeTextV.height
+                     anchors.horizontalCenter: parent.horizontalCenter
++                    visible: root.showPillContent
+ 
+                     Item {
+                         id: progressBarV
+                         width: 8
+                         height: 48
+                         anchors.centerIn: parent
+-                        visible: root.displayMode === "progress" && !root.isIdle
++                        visible: root.displayMode === "progress" && root.showPillContent
+ 
+                         Rectangle {
+                             anchors.fill: parent
+@@ -465,16 +419,6 @@
+                             radius: 4
+                             color: root.pillColor
+                         }
+-
+-                        MouseArea {
+-                            anchors.fill: parent
+-                            cursorShape: Qt.PointingHandCursor
+-                            onClicked: root.startPause()
+-                            onWheel: function (wheelEvent) {
+-                                var delta = wheelEvent.angleDelta.y > 0 ? 60 : -60;
+-                                root.adjustTime(delta);
+-                            }
+-                        }
+                     }
+ 
+                     StyledText {
+@@ -484,17 +428,7 @@
+                         font.pixelSize: Theme.fontSizeSmall
+                         isMonospace: true
+                         anchors.horizontalCenter: parent.horizontalCenter
+-                        visible: root.displayMode !== "progress" || root.isIdle
+-
+-                        MouseArea {
+-                            anchors.fill: parent
+-                            cursorShape: Qt.PointingHandCursor
+-                            onClicked: root.startPause()
+-                            onWheel: function (wheelEvent) {
+-                                var delta = wheelEvent.angleDelta.y > 0 ? 60 : -60;
+-                                root.adjustTime(delta);
+-                            }
+-                        }
++                        visible: root.displayMode !== "progress"
+                     }
+                 }
+             }
+@@ -734,25 +668,11 @@
+                         onClicked: root.skipPhase()
+                     }
+                 }
+-
+-                Rectangle {
+-                    width: parent.width
+-                    height: 1
+-                    color: Theme.outline
+-                    opacity: 0.2
+-                }
+-
+-                StyledText {
+-                    width: parent.width
+-                    text: "\u2022 Click the icon in the bar to cycle Timer / Stopwatch / Pomodoro\n"
+-                        + "\u2022 Left-click time to Start/Pause \u2022 Right-click to Reset\n"
+-                        + "\u2022 Scroll when paused to adjust time"
+-                    font.pixelSize: Theme.fontSizeSmall
+-                    color: Theme.surfaceVariantText
+-                    wrapMode: Text.WordWrap
+-                    horizontalAlignment: Text.AlignHCenter
+-                    lineHeight: 1.4
+-                }
+             }
++
++            Item {
++                width: 1
++                height: Theme.spacingXS
++            }
+         }
+     }

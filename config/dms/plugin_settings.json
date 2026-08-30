@@ -30,7 +30,9 @@
     "enabled": true
   },
   "timeManager": {
-    "enabled": true
+    "enabled": true,
+    "lastMode": "timer",
+    "displayMode": "time"
   },
   "workspaceFinder": {
     "enabled": true
