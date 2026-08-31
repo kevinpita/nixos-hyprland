@@ -595,7 +595,7 @@
           "modelIndex": 1
         }
       ],
-      "showOnLastDisplay": false,
+      "showOnLastDisplay": true,
       "leftWidgets": [
         "launcherButton",
         "workspaceSwitcher",
