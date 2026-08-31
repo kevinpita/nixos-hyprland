@@ -85,6 +85,23 @@ let
       printf '%s\n' "$now" > "$state_file"
     '';
   };
+  microphoneMute = pkgs.writeShellApplication {
+    name = "microphone-mute";
+    text = ''
+      result="$(${lib.getExe config.programs.dms-shell.package} ipc call audio micmute)"
+      case "$result" in
+        "Microphone muted") brightness=100 ;;
+        "Microphone unmuted") brightness=0 ;;
+        *) exit 0 ;;
+      esac
+
+      shopt -s nullglob
+      for led_path in /sys/class/leds/*::micmute; do
+        ${lib.getExe config.programs.dms-shell.package} brightness set \
+          "leds:''${led_path##*/}" "$brightness" >/dev/null
+      done
+    '';
+  };
   tuigreetCommand = lib.escapeShellArgs [
     (lib.getExe pkgs.tuigreet)
     "--time"
@@ -161,6 +178,7 @@ in
         home.packages = with pkgs; [
           inter
           libnotify
+          microphoneMute
           nautilus
           nixos-artwork.wallpapers.catppuccin-mocha
           omasnap

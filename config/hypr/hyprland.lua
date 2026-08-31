@@ -273,7 +273,7 @@ hl.layer_rule({
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(dms .. "audio increment 5"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(dms .. "audio decrement 5"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd(dms .. "audio mute"), { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(dms .. "audio micmute"), { locked = true, repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("microphone-mute"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(dms .. "brightness increment 5"), { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(dms .. "brightness decrement 5"), { locked = true, repeating = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })

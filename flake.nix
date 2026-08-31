@@ -66,6 +66,12 @@
           _module.args = { inherit dankcalendar; };
         };
         thinkpadBattery = import ./modules/thinkpad-battery.nix;
+        thinkpadLaptop = {
+          imports = [
+            self.nixosModules.thinkpadBattery
+            (import ./modules/thinkpad-laptop.nix)
+          ];
+        };
       };
 
       checks = forAllSystems (
@@ -77,7 +83,7 @@
             specialArgs.username = "kevin";
             modules = [
               self.nixosModules.default
-              self.nixosModules.thinkpadBattery
+              self.nixosModules.thinkpadLaptop
               home-manager.nixosModules.home-manager
               {
                 system.stateVersion = "25.11";
@@ -143,6 +149,7 @@
             assert evaluated.config.home-manager.users.kevin.programs.dank-calendar.enable;
             assert evaluated.config.home-manager.users.kevin.programs.dank-calendar.systemd.enable;
             assert evaluated.config.services.tlp.enable;
+            assert evaluated.config.systemd.user.services ? keyboard-backlight-osd;
             assert evaluated.config.services.tlp.settings.START_CHARGE_THRESH_BAT0 == 75;
             assert evaluated.config.services.tlp.settings.STOP_CHARGE_THRESH_BAT0 == 80;
             assert evaluated.config.programs.nixos-hyprland.configDirectory == "/home/kevin/nixos-hyprland";

@@ -10,7 +10,7 @@ Declarative Hyprland and Dank Material Shell configuration for NixOS.
 }
 ```
 
-Import `nixosModules.default`. ThinkPad battery controls are available through `nixosModules.thinkpadBattery`.
+Import `nixosModules.default`. On a ThinkPad, also import `nixosModules.thinkpadLaptop` for battery controls and the keyboard-backlight OSD. Use `nixosModules.thinkpadBattery` when you only need the battery controls.
 
 The default module links writable DMS settings and loads the Hyprland Lua configuration from `~/nixos-hyprland`. Override `programs.nixos-hyprland.configDirectory` when the checkout is in a different location.
 
