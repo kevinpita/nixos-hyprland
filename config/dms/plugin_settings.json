@@ -17,6 +17,7 @@
   },
   "dockerManager": {
     "enabled": true,
+    "dockerBinary": "podman",
     "terminalApp": "ghostty",
     "groupByCompose": false
   },

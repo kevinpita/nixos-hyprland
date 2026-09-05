@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   username,
   ...
@@ -13,7 +14,10 @@ let
 in
 {
   home-manager.users.${username} = {
-    home.packages = [ pkgs.docker-client ];
+    home.packages = [
+      config.virtualisation.podman.package
+      pkgs.podman-compose
+    ];
     xdg.configFile."DankMaterialShell/plugins/DockerManager".source = dockerManagerPlugin;
     systemd.user.services.dms.Unit.X-Restart-Triggers = [ dockerManagerPlugin ];
   };

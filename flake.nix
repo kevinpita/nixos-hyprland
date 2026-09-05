@@ -97,6 +97,7 @@
             ];
           };
           xdgFiles = evaluated.config.home-manager.users.kevin.xdg.configFile;
+          homePackageNames = map nixpkgs.lib.getName evaluated.config.home-manager.users.kevin.home.packages;
           requiredXdgFiles = [
             "DankMaterialShell/plugin_settings.json"
             "DankMaterialShell/plugins/aiOverviewControl"
@@ -137,6 +138,7 @@
               }
               ''
                 jq empty ${./config/dms/settings.json} ${./config/dms/plugin_settings.json}
+                jq -e '.dockerManager.dockerBinary == "podman"' ${./config/dms/plugin_settings.json} >/dev/null
                 luac -p ${./config/hypr/hyprland.lua}
                 touch "$out"
               '';
@@ -155,6 +157,9 @@
             assert evaluated.config.programs.nixos-hyprland.configDirectory == "/home/kevin/nixos-hyprland";
             assert evaluated.config.programs.nixos-hyprland.hostConfig == null;
             assert missingXdgFiles == [ ];
+            assert builtins.elem "podman" homePackageNames;
+            assert builtins.elem "podman-compose" homePackageNames;
+            assert !(builtins.elem "docker" homePackageNames);
             pkgs.writeText "nixos-hyprland-module-check" (
               builtins.toJSON {
                 calendar = evaluated.config.home-manager.users.kevin.programs.dank-calendar.enable;
